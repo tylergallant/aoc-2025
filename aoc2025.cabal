@@ -21,6 +21,7 @@ executable aoc2025
     Paths_aoc2025
     Utils
     Day01
+    Day02
 
   autogen-modules:
     Paths_aoc2025
