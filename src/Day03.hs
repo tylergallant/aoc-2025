@@ -6,6 +6,7 @@ import Utils (createSolver, getInput)
 
 type Battery = Int
 type Bank = [Battery]
+type Joltage = Int
 
 parser :: ReadP [Bank]
 parser = sepBy pBank sep <* char '\n'
@@ -14,23 +15,29 @@ parser = sepBy pBank sep <* char '\n'
     pBattery = read . pure <$> satisfy isDigit
     pBank = many1 pBattery
 
-maxJoltage :: Bank -> Int
-maxJoltage = scan 0 0
-  where
-    scan tens ones [] = tens * 10 + ones
-    scan tens ones [battery]
-      | battery > ones = tens * 10 + battery
-      | otherwise = tens * 10 + ones
-    scan tens ones (battery : rest)
-      | battery > tens = scan battery 0 rest
-      | battery > ones = scan tens battery rest
-      | otherwise = scan tens ones rest
+-- Took inspiration from https://github.com/glguy/advent/blob/main/solutions/src/2025/03.hs
+addDigit :: [Joltage] -> Battery -> [Joltage]
+addDigit prev d = do
+  (a, b) <- zip prev $ 0 : prev
+  return . max a $ b * 10 + d
 
-solution1 :: [Bank] -> Int
-solution1 = sum . map maxJoltage
+solveLine :: Bank -> [Joltage]
+solveLine = foldl addDigit $ repeat 0
+
+solution :: Int -> [Bank] -> Joltage
+solution digits banks = sum $ do
+  joltages <- solveLine <$> banks
+  return $ joltages !! digits
+
+solution1 :: [Bank] -> Joltage
+solution1 = solution 1
+
+solution2 :: [Bank] -> Joltage
+solution2 = solution 11
 
 day03 :: IO ()
 day03 = do
   input <- getInput "day03-input.txt"
   let solve = createSolver parser input
   solve solution1
+  solve solution2
