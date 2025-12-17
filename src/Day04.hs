@@ -1,6 +1,6 @@
 module Day04 (day04) where
 
-import Data.Set (Set, fromList, member)
+import Data.Set (Set, fromList, member, (\\))
 import Utils (getInput)
 
 type Position = (Int, Int)
@@ -36,14 +36,29 @@ rollNeighbors roll rolls = length . filter isRoll $ neighbors roll
 parser :: UnindexedDiagram -> RollPositions
 parser = onlyPositions . onlyRolls . indexDiagram
 
-solution1 :: RollPositions -> Int
-solution1 rolls = length . onlyAccessible $ foldr rollAccessibility [] rolls
+accessibleRolls :: RollPositions -> RollPositions
+accessibleRolls rolls = collectAccessible $ foldr rollAccessibility [] rolls
   where
-    rollAccessibility roll results = rollNeighbors roll rolls : results
-    onlyAccessible = filter (< accessibilityThreshold)
+    collectAccessible = fromList . map fst . filter isAccessible
+    rollAccessibility roll results = (roll, rollNeighbors roll rolls) : results
+    isAccessible (_, accessibility) = accessibility < accessibilityThreshold
     accessibilityThreshold = 4
+
+removeAccessibleRolls :: RollPositions -> RollPositions
+removeAccessibleRolls rolls = rolls \\ accessibleRolls rolls
+
+solution1 :: RollPositions -> Int
+solution1 = length . accessibleRolls
+
+solution2 :: RollPositions -> Int
+solution2 rolls
+  | length remaining == length rolls = 0
+  | otherwise = length rolls - length remaining + solution2 remaining
+  where remaining = removeAccessibleRolls rolls
 
 day04 :: IO ()
 day04 = do
   input <- getInput "day04-input.txt"
-  print . solution1 $ parser input
+  let rolls = parser input
+  print $ solution1 rolls
+  print $ solution2 rolls
