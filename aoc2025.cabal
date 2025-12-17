@@ -23,9 +23,11 @@ executable aoc2025
     Day01
     Day02
     Day03
+    Day04
 
   autogen-modules:
     Paths_aoc2025
 
   build-depends:
-      base ^>=4.20.0.0
+      base ^>=4.20.0.0,
+      containers ^>=0.7
