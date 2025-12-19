@@ -1,4 +1,4 @@
-module Day03 where
+module Day03 (day03) where
 
 import Data.Char (isDigit)
 import Text.ParserCombinators.ReadP (ReadP, char, many1, satisfy, sepBy)
