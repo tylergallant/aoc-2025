@@ -1,16 +1,17 @@
 module Day07 (day07) where
 
-import Data.Maybe (listToMaybe)
-import Data.Set (Set, fromList, intersection, notMember)
+import qualified Data.Map as M (fromSet, lookup)
+import Data.Maybe (catMaybes, fromMaybe, listToMaybe)
+import Data.Set (Set, fromList, intersection, lookupMin, notMember)
 import qualified Data.Set as S (filter)
 import Utils (getInput)
 
 type Pos = (Int, Int)
+type Grid = [(Pos, Char)]
 type Entrypoint = Pos
 type Splitter = Pos
 type Splitters = Set Splitter
 type Manifold = (Entrypoint, Splitters)
-type Grid = [(Pos, Char)]
 
 parseGrid :: String -> Grid
 parseGrid s = do
@@ -45,8 +46,32 @@ solution1 :: Manifold -> Int
 solution1 manifold@(_, splitters) = length $ S.filter isReachable splitters
   where isReachable = reachable manifold
 
+isBelow :: Pos -> Pos -> Bool
+isBelow (x1, y1) (x2, y2) = x1 == x2 && y1 < y2
+
+solution2 :: Manifold -> Int
+solution2 ((x, y), splitters) = fromMaybe 1 $ M.lookup firstSplitter timelines
+  where
+    firstSplitter = (x, y + 2)
+    timelines = M.fromSet splitterTimelines splitters
+    splitterTimelines = fromMaybe 1 . sumTimelines . reachableFrom
+    reachableFrom splitter = catMaybes [left splitter, right splitter]
+    left (x', y') = lookupMin $ S.filter (isBelow (x' - 1, y')) splitters
+    right (x', y') = lookupMin $ S.filter (isBelow (x' + 1, y')) splitters
+    sumTimelines [] = Just 2
+    sumTimelines [x'] = (+1) <$> M.lookup x' timelines
+    sumTimelines (x':y':_) = do
+      x'' <- M.lookup x' timelines
+      y'' <- M.lookup y' timelines
+      Just $ x'' + y''
+
+runSolutions :: Manifold -> IO ()
+runSolutions manifold = do
+  print $ solution1 manifold
+  print $ solution2 manifold
+
 day07 :: IO ()
 day07 = do
   input <- getInput "day07-input.txt"
-  let manifold = parseManifold input
-  print $ solution1 <$> manifold
+  maybe parseFailure runSolutions $ parseManifold input
+    where parseFailure = putStrLn "Failed to parse input"
